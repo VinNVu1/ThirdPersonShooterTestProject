@@ -35,13 +35,13 @@ public class MovementStateManager : MonoBehaviour
         moveAction.Disable();  
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+   
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    // Update is called once per frame
+    
     void Update()
     {
         GetDirectionAndMove();
@@ -49,12 +49,21 @@ public class MovementStateManager : MonoBehaviour
     }
 
     void GetDirectionAndMove()
-    {
-        Vector2 input = moveAction.ReadValue<Vector2>();
-        direction = transform.forward * input.y + transform.right * input.x;
+{
+    Vector2 input = moveAction.ReadValue<Vector2>();
+    direction = new Vector3(input.x, 0, input.y).normalized; 
 
-        controller.Move(direction * moveSpeed * Time.deltaTime);
+   
+    controller.Move(direction * moveSpeed * Time.deltaTime);
+
+    
+    if (direction != Vector3.zero) 
+    {
+        
+        Quaternion targetRotation = Quaternion.LookRotation(new Vector3(input.x, 0, input.y));
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);   
     }
+}
 
     bool isGrounded()
     {
