@@ -18,11 +18,16 @@ public class MovementStateManager : MonoBehaviour
     [SerializeField] float gravity = -9.81f;
     Vector3 velocity;
 
+    private Camera mainCamera;
+
     void Awake()
     {
         controller = GetComponent<CharacterController>();
         var playerInput = new InputSystemActions();
         moveAction = playerInput.Player.Move;
+
+        
+        mainCamera = Camera.main;
     }
 
     void OnEnable()
@@ -53,15 +58,25 @@ public class MovementStateManager : MonoBehaviour
     Vector2 input = moveAction.ReadValue<Vector2>();
     direction = new Vector3(input.x, 0, input.y).normalized; 
 
-   
-    controller.Move(direction * moveSpeed * Time.deltaTime);
-
-    
     if (direction != Vector3.zero) 
     {
         
-        Quaternion targetRotation = Quaternion.LookRotation(new Vector3(input.x, 0, input.y));
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);   
+        Vector3 cameraForward = mainCamera.transform.forward;
+        Vector3 cameraRight = mainCamera.transform.right;
+
+        
+        cameraForward.y = 0;
+        cameraForward.Normalize();
+
+        
+        Vector3 moveDirection = cameraForward * direction.z + cameraRight * direction.x;
+
+        
+        controller.Move(moveDirection * moveSpeed * Time.deltaTime);
+
+       
+        Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f); 
     }
 }
 
@@ -88,3 +103,6 @@ public class MovementStateManager : MonoBehaviour
 
 
 }
+
+
+// No Comment Demon - Adrian
