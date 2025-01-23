@@ -1,11 +1,8 @@
-using Unity.Cinemachine;
-using UnityEditor.Build;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class MovementStateManager : MonoBehaviour
 {
-
     public float moveSpeed = 3;
     private InputAction moveAction;
     [HideInInspector] public Vector3 direction;
@@ -19,6 +16,7 @@ public class MovementStateManager : MonoBehaviour
     Vector3 velocity;
 
     private Camera mainCamera;
+    private Animator animator;
 
     void Awake()
     {
@@ -26,8 +24,8 @@ public class MovementStateManager : MonoBehaviour
         var playerInput = new InputSystemActions();
         moveAction = playerInput.Player.Move;
 
-        
         mainCamera = Camera.main;
+        animator = GetComponent<Animator>(); // Defines Animator
     }
 
     void OnEnable()
@@ -40,51 +38,44 @@ public class MovementStateManager : MonoBehaviour
         moveAction.Disable();  
     }
 
-   // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-     // Update is called once per frame
     void Update()
     {
         GetDirectionAndMove();
         Gravity();
+        UpdateAnimator();
     }
 
     void GetDirectionAndMove()
-{
-    Vector2 input = moveAction.ReadValue<Vector2>();
-    direction = new Vector3(input.x, 0, input.y).normalized; 
-
-    if (direction != Vector3.zero) 
     {
-        
-        Vector3 cameraForward = mainCamera.transform.forward;
-        Vector3 cameraRight = mainCamera.transform.right;
+        Vector2 input = moveAction.ReadValue<Vector2>();
+        direction = new Vector3(input.x, 0, input.y).normalized; 
 
-        
-        cameraForward.y = 0;
-        cameraForward.Normalize();
+        if (direction != Vector3.zero) 
+        {
+            Vector3 cameraForward = mainCamera.transform.forward;
+            Vector3 cameraRight = mainCamera.transform.right;
 
-        
-        Vector3 moveDirection = cameraForward * direction.z + cameraRight * direction.x;
+            cameraForward.y = 0;
+            cameraForward.Normalize();
 
-        
-        controller.Move(moveDirection * moveSpeed * Time.deltaTime);
+            Vector3 moveDirection = cameraForward * direction.z + cameraRight * direction.x;
 
-       
-        Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f); 
+            controller.Move(moveDirection * moveSpeed * Time.deltaTime);
+
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f); 
+        }
     }
-}
 
     bool isGrounded()
     {
         spherePos = new Vector3(transform.position.x, transform.position.y - groundYOffset, transform.position.z);
-        if (Physics.CheckSphere(spherePos, controller.radius - 0.05f, groundMask)) return true;
-        return false; 
+        return Physics.CheckSphere(spherePos, controller.radius - 0.05f, groundMask);
     }
 
     void Gravity()
@@ -95,14 +86,16 @@ public class MovementStateManager : MonoBehaviour
         controller.Move(velocity * Time.deltaTime);
     }
 
+    private void UpdateAnimator()
+    {
+        // You need this cool wacky Speed Definer in Animator
+        float speed = direction.magnitude * moveSpeed;
+        animator.SetFloat("Speed", speed); 
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(spherePos, controller.radius - 0.05f);
     }
-
-
 }
-
-
-// No Comment Demon - Adrian
